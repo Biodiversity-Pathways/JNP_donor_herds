@@ -58,6 +58,8 @@ meta.ft <- flextable(simp.meta.order) %>%
   align(align = 'center', part = 'header')
 meta.ft
 
+DT::datatable(simp.meta.order, options = list(pageLength = 20))
+
 ### make forecasted tables ----
 mk_table <- function(tab, title){
   tmp <- tab[,.(herd,          
