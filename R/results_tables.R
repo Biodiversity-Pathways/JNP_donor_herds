@@ -13,8 +13,8 @@ census_yr <- fread(file.path('Data', 'herds_last_census.csv'))
 
 ## load results ----
 files <- list.files(path = results.path)
-results <- data.table(files = files[files %like% 'results_noDD'])
-results[,names := stringr::str_extract(files, "(?<=results_).*(?=_20240709.csv)")]
+results <- data.table(files = files[files %like% 'results'])
+results[,names := stringr::str_extract(files, "(?<=results_).*(?=_202407)")]
 
 for (i in 1:length(results$files)) { # for each file in the list
   fileName <- results$files[[i]] # save filename of element i
@@ -146,3 +146,23 @@ yrs2recover.ft <- flextable(yrs2recover.order) %>%
   align(align = 'center', part = 'header') %>%
   align(align = c('left', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center'))
 yrs2recover.ft
+
+## FOR APPENDICES ----
+### extirpation herds ----
+ext.herds <- fread(file.path(results.path, 'results_noDD_20240711.csv'))
+
+ext.herds <- ext.herds[,.(decline.probability.2023, FE.probability.10yrs, FE.probability.30yrs, FE.probability.100yrs)]
+
+### DD results tables ----
+DDrm3 <- mk_table(DD_remove3in2025_remove0in2026, title = 'Remove 3 cows in 2025 modelled with density-dependence')
+DDrm3
+
+DDrm6 <- mk_table(DD_remove6in2025_remove0in2026, title = 'Remove 6 cows in 2025 modelled with density-dependence')
+DDrm6
+
+DDrm12 <- mk_table(DD_remove12in2025_remove0in2026, title = 'Remove 12 cows in 2025 modelled with density-dependence')
+DDrm12
+
+DDrm24 <- mk_table(DD_remove24in2025_remove0in2026, title = 'Remove 24 cows in 2025 modelled with density-dependence')
+DDrm24
+
