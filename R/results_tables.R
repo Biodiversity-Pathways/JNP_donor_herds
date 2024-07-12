@@ -111,7 +111,7 @@ rm12n12 <- mk_table(noDD_remove12in2025_remove12in2026, title = 'Remove 12 cows 
 rm12n12
 
 ### years to recovery ----
-# duplicate 2024 vals
+# remove duplicate 2024 vals
 dups <- c("N.pre_removal.lower95", "N.pre_removal.median", "N.pre_removal.upper95", 
           "r.pre_removal.lower95", "r.pre_removal.median", "r.pre_removal.upper95" )
 predResults <- rbind(noDD_remove3in2025_remove0in2026[,!(names(noDD_remove3in2025_remove0in2026) %in% dups), with = F][,removal := '3'], 
