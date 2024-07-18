@@ -149,9 +149,9 @@ yrs2recover.ft
 
 ## FOR APPENDICES ----
 ### extirpation herds ----
-ext.herds <- fread(file.path(results.path, 'results_noDD_20240711.csv'))
+tooSmallHerds <- data.table(herd = c('Brazeau', 'Frisby-Boulder', ' Purcells South', 'South Selkirks', 'Narrow Lake'))
 
-ext.herds <- ext.herds[,.(decline.probability.2023, FE.probability.10yrs, FE.probability.30yrs, FE.probability.100yrs)]
+ext.herds <- SmallHerds[,.(decline.probability.2023, FE.probability.10yrs, FE.probability.30yrs, FE.probability.100yrs)]
 
 ### DD results tables ----
 DDrm3 <- mk_table(DD_remove3in2025_remove0in2026, title = 'Remove 3 cows in 2025 modelled with density-dependence')
