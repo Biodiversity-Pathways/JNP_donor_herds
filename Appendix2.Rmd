@@ -1,0 +1,195 @@
+---
+output:
+  html_document: 
+    toc: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+libs <- c('data.table', 'DT', 'tidyr')
+lapply(libs, require, character.only = TRUE)
+
+## Input data ----
+results.path <-  file.path('Data', 'results')
+
+census_yr <- fread(file.path('Data', 'herds_last_census.csv'))
+
+## load results ----
+files <- list.files(path = results.path)
+results <- data.table(files = files[files %like% 'results'])
+results[,names := stringr::str_extract(files, "(?<=results_).*(?=_202407)")]
+
+for (i in 1:length(results$files)) { # for each file in the list
+  fileName <- results$files[[i]] # save filename of element i
+  dataName <- results$names[[i]] # save data name of element i
+  tempData <- fread (file.path(results.path, fileName)) # read csv file
+  assign (dataName, tempData, envir=.GlobalEnv)  # assign the results of file to the data named
+  
+}
+
+dictionary <- data.table(cols = c("herd", 'last_census',
+                                  "N.2024", "N.2024.uncertainty",
+                         "lambda.2024", "lambda.2024.uncertainty",
+                         "N.2027", "N.2027.uncertainty", 
+                         "lambda.2027", "lambda.2027.uncertainty",
+                         #"recovery5yrs", 
+                         "time2recovery", 
+                         "lambda.5yr", "lambda.5yr.uncertainty",
+                         "cow.prod"),
+                         labs = c("Subpopulation", 'Yr of last census',
+                                  "# adult cows 2024", "% uncertainty in # cows 2024",
+                                  "Lambda 2024", "% uncertainty lambda 2024",
+                                  "# adult cows 2027", "% uncertainty in # cows 2027", 
+                                  "Lambda 2027", "% uncertainty lambda 2027",
+                                 # "% recovered in 5 yrs",
+                                  "Yrs to recover pre-removal level", 
+                                 "5-yr lambda", "% uncertainty 5-yr lambda",
+                                 "Predicted cow growth"))
+
+mk_table <- function(tab, title){
+  tmp <- tab[,.(herd,          
+         N.2027 = N.post_removal.median, N.2027.uncertainty = round((N.post_removal.median - N.post_removal.lower95)/N.post_removal.median*100),
+         #lambda.2027 = round(exp(r.post_removal.median), 2), lambda.2027.uncertainty = round(abs(((exp(r.post_removal.median) - exp(r.post_removal.lower95))/exp(r.post_removal.median))*100)),
+         lambda.5yr = round(exp(r.5yr.median), 2), lambda.5yr.uncertainty = round(abs(((exp(r.5yr.median) - exp(r.5yr.lower95))/exp(r.5yr.median))*100)),
+         #recovery5yrs = round((N.2029.median/N.pre_removal.median)*100), 
+         time2recovery.upper50 
+         )]
+  tmp[herd == 'A La Peche', herd:= 'À la Pêche']
+  tmp[,time2recovery:=as.character(time2recovery.upper50)]
+  tmp[is.na(time2recovery.upper50), time2recovery := '>100']
+  tmp[time2recovery.upper50 == 2, time2recovery := '\u22642']
+  tmp.order <- tmp[order(time2recovery.upper50, -lambda.5yr, lambda.5yr.uncertainty, -N.2027)]
+  setnames(tmp.order, old = dictionary$cols, new = dictionary$labs, skip_absent = T)
+  ft.tmp <- datatable(tmp.order[,-'time2recovery.upper50'], options = list(pageLength = 20))
+  return(ft.tmp)
+}
+```
+
+## Identifying source herds for Jasper National Park caribou captive breeding facility
+* Authors:
+    + [Julie W. Turner](https://wildlifescience.ca/team/julie-turner/)
+    + [Tal Avgar](https://wildlifescience.ca/team/tal-avgar/)
+    + [Robert Serrouya](https://wildlifescience.ca/team/dr-robert-serrouya/)
+
+    
+This repository contains the code for analyses [Biodiversity Pathways](https://biodiversitypathways.ca) did on behalf of Jasper National Park (JNP) to identify potential source herds of Southern Mountain Caribou to start their captive breeding program.
+
+Below are tables from the report that can be sorted interactively to aid decision-making.
+
+### Pre-removal status
+Predicted 2024 herd statuses for herds based on the IPM and last known field censuses
+```{r meta.tab, echo=FALSE}
+meta.tab <- merge(noDD_remove0in2025_remove0in2026, census_yr, by = 'herd')
+simp.meta.tab <- meta.tab[,.(herd, last_census = as.character(last_census),
+                  N.2024 = N.pre_removal.median, N.2024.uncertainty = round((N.pre_removal.median - N.pre_removal.lower95)/N.pre_removal.median*100),
+       lambda.2024 = round(exp(r.pre_removal.median), 2), 
+       lambda.2024.uncertainty = round(abs(((exp(r.pre_removal.median) - exp(r.pre_removal.lower95))/exp(r.pre_removal.median))*100)),
+       cow.prod = round(N.pre_removal.median*exp(r.pre_removal.median))-N.pre_removal.median)]
+simp.meta.tab[herd == 'A La Peche', herd:= 'À la Pêche']
+simp.meta.order <- simp.meta.tab[order(-cow.prod, -N.2024, -lambda.2024, lambda.2024.uncertainty, -last_census)]
+setnames(simp.meta.order, old = dictionary$cols, new = dictionary$labs, skip_absent = T)
+
+datatable(simp.meta.order[,-"Predicted cow growth"], options = list(pageLength = 20))
+
+```
+
+
+### Summary of years to recovery under each scenario
+Predicted years to recovery combined across scenarios. Subpopulations are ranked by predicted cow growth in the 2024-2025 without removals, highlighting number of “surplus” cows.
+```{r summary, echo=FALSE}
+# remove duplicate 2024 vals
+dups <- c("N.pre_removal.lower95", "N.pre_removal.median", "N.pre_removal.upper95", 
+          "r.pre_removal.lower95", "r.pre_removal.median", "r.pre_removal.upper95" )
+predResults <- rbind(noDD_remove3in2025_remove0in2026[,!(names(noDD_remove3in2025_remove0in2026) %in% dups), with = F][,removal := '3'], 
+                    noDD_remove6in2025_remove0in2026[,!(names(noDD_remove6in2025_remove0in2026) %in% dups), with = F][,removal := '6'],
+                     noDD_remove3in2025_remove3in2026[,!(names(noDD_remove3in2025_remove3in2026) %in% dups), with = F][,removal := '3/3'], 
+                    noDD_remove12in2025_remove0in2026[,!(names(noDD_remove12in2025_remove0in2026) %in% dups), with = F][,removal := '12'],
+                     noDD_remove6in2025_remove6in2026[,!(names(noDD_remove6in2025_remove6in2026) %in% dups), with = F][,removal := '6/6'], 
+                    noDD_remove24in2025_remove0in2026[,!(names(noDD_remove24in2025_remove0in2026) %in% dups), with = F][,removal := '24'],
+                     noDD_remove12in2025_remove12in2026[,!(names(noDD_remove12in2025_remove12in2026) %in% dups), with = F][,removal := '12/12'])
+allResults <- merge(meta.tab[,.(herd, last_census = as.character(last_census),
+                                N.2024 = N.pre_removal.median,
+                                cow.prod = round(N.pre_removal.median*exp(r.pre_removal.median))-N.pre_removal.median)], 
+                    predResults, 
+                    by = 'herd')
+
+yrs2recover <- allResults[,.(herd, last_census, N.2024, removal,
+                             cow.prod, time2recovery.upper50)]
+yrs2recover[,time2recovery := as.character(time2recovery.upper50)]
+yrs2recover[is.na(time2recovery.upper50), time2recovery := '>100']
+yrs2recover[time2recovery.upper50 == 2, time2recovery := '\u22642']
+yrs2recover.wide <- dcast(yrs2recover, herd + last_census + N.2024 + cow.prod ~ removal, value.var = 'time2recovery')
+
+yrs2recover.wide <- yrs2recover.wide[,.(herd, last_census, N.2024, cow.prod,
+                                        `3`, `6`, `3/3`, `12`, `6/6`, `24`, `12/12`)]
+yrs2recover.wide[herd == 'A La Peche', herd:= 'À la Pêche']
+
+yrs2recover.order <- yrs2recover.wide[order(-cow.prod, -N.2024, -last_census)]
+setnames(yrs2recover.order, old = dictionary$cols, new = dictionary$labs, skip_absent = T)
+datatable(yrs2recover.order, options = list(pageLength = 20))
+```
+
+
+### Scenario: remove 3 cows
+Predicted results of herd population viability when removing 3 cows in 2025 based on 1000 draws from the IPM posteriors
+```{r rm3, echo=FALSE}
+rm3 <- mk_table(noDD_remove3in2025_remove0in2026)
+rm3
+
+```
+
+
+### Scenario: remove 6 cows
+Predicted results of herd population viability when removing 6 cows in 2025 based on 1000 draws from the IPM posteriors
+```{r rm6, echo=FALSE}
+rm6 <- mk_table(noDD_remove6in2025_remove0in2026)
+rm6
+
+```
+
+
+### Scenario: remove 6 cows staggered years
+Predicted results of herd population viability when removing 3 cows in 2025 and 3 cows in 2026 based on 1000 draws from the IPM posteriors
+```{r rm3n3, echo=FALSE}
+rm3n3 <- mk_table(noDD_remove3in2025_remove3in2026)
+rm3n3
+
+```
+
+
+### Scenario: remove 12 cows
+Predicted results of herd population viability when removing 12 cows in 2025 based on 1000 draws from the IPM posteriors
+```{r rm12, echo=FALSE}
+rm12 <- mk_table(noDD_remove12in2025_remove0in2026)
+rm12
+
+```
+
+
+### Scenario: remove 12 cows staggered years
+Predicted results of herd population viability when removing 6 cows in 2025 and 6 cows in 2026 based on 1000 draws from the IPM posteriors
+```{r rm6n6, echo=FALSE}
+rm6n6 <- mk_table(noDD_remove6in2025_remove6in2026)
+rm6n6
+
+```
+
+
+### Scenario: remove 24 cows
+Predicted results of herd population viability when removing 24 cows in 2025 based on 1000 draws from the IPM posteriors
+```{r rm24, echo=FALSE}
+rm24 <- mk_table(noDD_remove24in2025_remove0in2026)
+rm24
+
+```
+
+
+### Scenario: remove 6 cows staggered years
+Predicted results of herd population viability when removing 3 cows in 2025 and 3 cows in 2026 based on 1000 draws from the IPM posteriors
+```{r rm12n12, echo=FALSE}
+rm12n12 <- mk_table(noDD_remove12in2025_remove12in2026)
+rm12n12
+
+```
