@@ -42,7 +42,7 @@ dictionary <- data.table(cols = c("herd", 'last_census',
                                   "# adult cows 2027", "% uncertainty in # cows 2027", 
                                   "Lambda 2027", "% uncertainty lambda 2027",
                                  # "% recovered in 5 yrs",
-                                  "Yrs to recovery since 2025", 
+                                  "Yrs to recover pre-removal level", 
                                  "5-yr lambda", "% uncertainty 5-yr lambda",
                                  "Predicted cow growth"))
 #tab <- remove3in2025
