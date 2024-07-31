@@ -1,5 +1,5 @@
 
-## Identifying source herds for Jasper National Park caribou captive breeding facility
+## Impact of cow removals on source herds for conservation breeding
 
 - Authors:
   - [Julie W. Turner](https://wildlifescience.ca/team/julie-turner/)
