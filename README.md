@@ -10,4 +10,5 @@
 This repository contains the code for analyses [Biodiversity
 Pathways](https://biodiversitypathways.ca) did on behalf of Jasper
 National Park (JNP) to identify potential source herds of Southern
-Mountain Caribou to start their captive breeding program.
+Mountain Caribou to start their [captive breeding
+program](https://parks.canada.ca/pn-np/ab/jasper/nature/conservation/~/~/link.aspx?_id=89F41E60EC4E435FB1FAC2437EC82855&_z=z).
