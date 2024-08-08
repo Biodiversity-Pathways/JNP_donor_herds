@@ -1,5 +1,7 @@
 
-## Impact of cow removals on source herds for conservation breeding
+## Impact of removing adult female caribou on source herds for conservation breeding
+
+[![DOI](https://zenodo.org/badge/823849746.svg)](https://zenodo.org/doi/10.5281/zenodo.13274463)
 
 - Authors:
   - [Julie W. Turner](https://wildlifescience.ca/team/julie-turner/)
