@@ -59,7 +59,7 @@ simp.meta.order <- simp.meta.tab[order(-cow.prod, -N.2024, -lambda.2024, lambda.
 setnames(simp.meta.order, old = dictionary$cols, new = dictionary$labs, skip_absent = T)
 
 meta.ft <- flextable(simp.meta.order) %>%
-  add_header_lines(values = 'Business as usual 2024') %>%
+  add_header_lines(values = 'Business-as-usual 2024') %>%
   align(align = 'center', part = 'header') 
 meta.ft
 
